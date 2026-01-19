@@ -3,7 +3,8 @@ import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 
 const ProductCard = ({ product }) => {
-  const { currency, addToCart, removeFromCart, cartItems } = useAppContext();
+  const { currency, addToCart, removeFromCart, cartItems, navigate } =
+    useAppContext();
 
   if (!product) return null;
 
@@ -22,6 +23,10 @@ const ProductCard = ({ product }) => {
     hover:shadow-lg
     mt-8
   "
+      onClick={() => {
+        navigate(`/products/${product.category.toLowerCase()}/${product._id}`);
+        scrollTo(0, 0);
+      }}
     >
       {/* Image */}
       <div className="cursor-pointer flex items-center justify-center px-2 overflow-hidden rounded-lg">
