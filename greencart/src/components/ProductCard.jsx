@@ -67,9 +67,11 @@ const ProductCard = ({ product }) => {
         {/* Price + Action */}
         <div className="flex items-end justify-between mt-4">
           <p className="md:text-xl text-base font-medium text-primary">
-            {currency}${product.offerPrice}{" "}
+            {currency}
+            {product.offerPrice}{" "}
             <span className="text-gray-500/60 md:text-sm text-xs line-through ml-1">
-              {currency}${product.price}
+              {currency}
+              {product.price}
             </span>
           </p>
 
