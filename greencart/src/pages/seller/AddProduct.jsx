@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { assets, categories } from "../../assets/assets";
+import { useAppContext } from "../../context/AppContext";
+import toast from "react-hot-toast";
 
 const AddProduct = () => {
   const [files, setFiles] = useState([]);
@@ -9,8 +11,41 @@ const AddProduct = () => {
   const [price, setPrice] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
 
+  const { axios } = useAppContext();
+
   const onSubmitHandler = async (event) => {
-    event.preventDefault();
+    try {
+      event.preventDefault();
+      const productData = {
+        name,
+        description: description.split("\n"),
+        category,
+        price,
+        offerPrice,
+      };
+
+      const formData = new FormData();
+      formData.append("productData", JSON.stringify(productData));
+      for (let i = 0; i < files.length; i++) {
+        formData.append("images", files[i]);
+      }
+
+      const { data } = await axios.post("/api/product/add", formData);
+
+      if (data.success) {
+        toast.success(data.message);
+        setName("");
+        setDescription("");
+        setCategory("");
+        setPrice("");
+        setOfferPrice("");
+        setFiles([]);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   return (
@@ -93,11 +128,11 @@ const AddProduct = () => {
             className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
           >
             <option value="">Select Category</option>
-            {categories.map((item, index) => {
+            {categories.map((item, index) => (
               <option key={index} value={item.path}>
                 {item.path}
-              </option>;
-            })}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-5 flex-wrap">
