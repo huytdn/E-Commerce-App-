@@ -73,6 +73,22 @@ const Cart = () => {
         } else {
           toast.error(data.message);
         }
+      } else {
+        // place order with stripe
+        const { data } = await axios.post("/api/order/stripe", {
+          userId: user._id,
+          items: cartArray.map((item) => ({
+            product: item._id,
+            quantity: item.quantity,
+          })),
+          address: selectedAddress._id,
+        });
+
+        if (data.success) {
+          window.location.replace(data.url);
+        } else {
+          toast.error(data.message);
+        }
       }
     } catch (error) {
       toast.error(error.message);
@@ -107,7 +123,7 @@ const Cart = () => {
 
         {cartArray.map((product, index) => (
           <div
-            key={index}
+            key={product._id}
             className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3"
           >
             <div className="flex items-center md:gap-6 gap-3">
@@ -210,6 +226,7 @@ const Cart = () => {
               <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
                 {addresses.map((address, index) => (
                   <p
+                    key={address._id}
                     onClick={() => {
                       setSelectedAddress(address);
                       setShowAddress(false);
