@@ -4,15 +4,24 @@ import { dummyOrders } from "../assets/assets";
 
 const MyOrders = () => {
   const [myOrders, setMyOrders] = useState([]);
-  const { currency } = useAppContext();
+  const { currency, axios, user } = useAppContext();
 
   const fetchMyOrders = async () => {
-    setMyOrders(dummyOrders);
+    try {
+      const { data } = await axios.get("/api/order/user");
+      if (data.success) {
+        setMyOrders(data.orders);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
-    fetchMyOrders();
-  }, []);
+    if (user) {
+      fetchMyOrders();
+    }
+  }, [user]);
 
   return (
     <div className="mt-16 pb-16">
@@ -21,7 +30,7 @@ const MyOrders = () => {
         <div className="w-16 h-0.5 bg-primary rounded-full"></div>
       </div>
 
-      {myOrders.map((order, index) => (
+      {myOrders?.map((order, index) => (
         <div
           key={index}
           className="border border-gray-300 rounded-lg mb-10 p-4 py-5 max-w-4xl"
@@ -42,7 +51,7 @@ const MyOrders = () => {
               <div className="flex items-center mb-4 md:mb-0">
                 <div className="bg-primary/10 p-4 rounded-lg">
                   <img
-                    src={item.product.image[0]}
+                    src={item.product?.image?.[0]}
                     alt=""
                     className="w-16 h-1/6"
                   />
@@ -55,9 +64,9 @@ const MyOrders = () => {
                 </div>
               </div>
               <div className="flex flex-col justify-center md:ml-8 mb-4 md:mb-0">
-                <p>Quatity: {item.quatity || "1"}</p>
+                <p>Quantity: {item.quantity}</p>
                 <p>Status: {order.status}</p>
-                <p>Date: {new Date(order.createAt).toLocaleDateString()}</p>
+                <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
               </div>
               <p className="text-primary text-lg font-medium">
                 Amount: {currency}
