@@ -51,8 +51,8 @@ export const placeOrderStripe = async (req, res) => {
 
     let productData = [];
 
-    // calculate amount using items
-    let amount = await items.reduce(async (acc, item) => {
+    // calculate subtotal using items
+    let subtotal = await items.reduce(async (acc, item) => {
       const product = await Product.findById(item.product);
       productData.push({
         name: product.name,
@@ -62,8 +62,9 @@ export const placeOrderStripe = async (req, res) => {
       return (await acc) + product.offerPrice * item.quantity;
     }, 0);
 
-    // add tax charge (2%)
-    amount += Math.floor(amount * 0.02);
+    // add tax charge (2%) — calculated once on total to avoid rounding drift
+    const taxAmount = Math.floor(subtotal * 0.02);
+    const amount = subtotal + taxAmount;
 
     const order = await Order.create({
       userId,
@@ -77,7 +78,7 @@ export const placeOrderStripe = async (req, res) => {
     // stripe gateway initialize
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
 
-    // create line items for stripe
+    // create line items for stripe (base prices only, no per-item tax)
     const line_items = productData.map((item) => {
       return {
         price_data: {
@@ -85,10 +86,20 @@ export const placeOrderStripe = async (req, res) => {
           product_data: {
             name: item.name,
           },
-          unit_amount: Math.floor(item.price + item.price * 0.02) * 100,
+          unit_amount: item.price * 100, // in cents, tax excluded
         },
         quantity: item.quantity,
       };
+    });
+
+    // add tax as a single separate line item to match DB amount exactly
+    line_items.push({
+      price_data: {
+        currency: "usd",
+        product_data: { name: "Tax (2%)" },
+        unit_amount: taxAmount * 100,
+      },
+      quantity: 1,
     });
 
     // create session
@@ -126,6 +137,7 @@ export const stripeWebhooks = async (request, response) => {
     );
   } catch (error) {
     response.status(400).send(`Webhook Error: ${error.message}`);
+    return; // prevent execution continuing with undefined event
   }
 
   // handle the event
